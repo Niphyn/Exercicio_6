@@ -145,8 +145,7 @@ void list_delete(LinkedList *lst)
 void list_sort(LinkedList *lst, int compare(void *, void *))
 {
     if((lst->size) > 1){
-        void *aux;
-        Node *aux_ptr_node,*right_node,*left_node;
+        Node *right_node,*left_node,*previous_node = NULL;
         int qtd_fora_ordem = 0, verifica = -1;
         while(verifica != 0){
             for(int i= 0; i < lst->size; i++){
@@ -154,17 +153,19 @@ void list_sort(LinkedList *lst, int compare(void *, void *))
                     left_node = lst->head;
                     right_node = left_node->next;
                 }else{
+                    previous_node = left_node;
                     left_node = right_node;
                     right_node = left_node->next;
                 }
                 if((right_node != NULL) && (compare(right_node->value,left_node->value) < 0)){
                     qtd_fora_ordem++;
-                    aux = left_node->value;
-                    left_node->value = right_node->value;
-                    right_node->value = aux;
-                    aux_ptr_node = right_node->next;
+                    left_node->next = right_node->next;
                     right_node->next = left_node;
-                    left_node->next = aux_ptr_node;
+                    if(left_node == (lst->head)){
+                        lst->head = right_node;
+                    }else{
+                        previous_node->next = right_node;
+                    }
                 }
                 if(qtd_fora_ordem != 0 ){
                     break;
