@@ -5,17 +5,24 @@
 
 typedef struct Node
 {
-    int value;
+    void *value;
     struct Node *next;
 } Node;
 
 struct LinkedList
 {
     Node *head;
+    desaloca ptr_funcao_desaloca;
     int size;
 };
 
-Node *node_construct(int value, Node *next)
+typedef int (*comparacao)(const void *value1, const void *value2);
+
+int list_size(LinkedList *lst){
+    return lst->size;
+}
+
+Node *node_construct(void *value, Node *next)
 {
     Node *node = (Node *)calloc(1, sizeof(Node));
     node->value = value;
@@ -28,37 +35,38 @@ void node_delete(Node *node)
     free(node);
 }
 
-LinkedList *list_construct()
+LinkedList *list_construct(desaloca funcao_desalocando)
 {
     LinkedList *lst = (LinkedList *)calloc(1, sizeof(LinkedList));
     lst->head = NULL;
     lst->size = 0;
+    lst->ptr_funcao_desaloca = funcao_desalocando;
     return lst;
 }
 
-void list_add_left(LinkedList *lst, int value)
+void list_add_left(LinkedList *lst, void *value)
 {
     lst->head = node_construct(value, lst->head);
     lst->size++;
 }
 
-int list_pop_left(LinkedList *lst)
+void list_pop_left(LinkedList *lst)
 {
     if (lst->size < 1)
         exit(printf("Error: Trying to pop elements in an empty linkedlist.\n"));
 
-    int head_value = lst->head->value;
+    void *head_value = lst->head->value;
     Node *previous_head = lst->head;
 
     lst->head = lst->head->next;
     lst->size--;
 
+    desaloca funcao_desaloca = lst->ptr_funcao_desaloca;
+    funcao_desaloca(head_value);
     node_delete(previous_head);
-
-    return head_value;
 }
 
-int list_get_left(LinkedList *lst)
+void *list_get_left(LinkedList *lst)
 {
     if (lst->size < 1)
         exit(printf("Error: Trying to pop elements in an empty linkedlist.\n"));
@@ -66,13 +74,13 @@ int list_get_left(LinkedList *lst)
     return lst->head->value;
 }
 
-void list_print(LinkedList *lst)
+void list_print(LinkedList *lst,void printar(void *))
 {
     Node *it = lst->head;
 
     while (it != NULL)
     {
-        printf("%d ", it->value);
+        printar(it->value);
         it = it->next;
     }
 }
@@ -89,7 +97,7 @@ void list_delete(LinkedList *lst)
     free(lst);
 }
 
-void list_add_sorted(LinkedList *lst, int value)
+/*void list_add_sorted(LinkedList *lst, int value)
 {
     // Caso 1: o valor deve ser adicionado no inicio da lista.
     // Isto acontece quando a lista eh vazia ou quando o primeiro
@@ -132,9 +140,41 @@ void list_add_sorted(LinkedList *lst, int value)
     Node *new = node_construct(value, current);
     previous->next = new;
     lst->size++;
-}
+}*/
 
 void list_sort(LinkedList *lst, int compare(void *, void *))
 {
-    // TODO: Funcao a ser implementada
+    if((lst->size) > 1){
+        void *aux;
+        Node *aux_ptr_node,*right_node,*left_node;
+        int qtd_fora_ordem = 0, verifica = -1;
+        while(verifica != 0){
+            for(int i= 0; i < lst->size; i++){
+                if(i==0){
+                    left_node = lst->head;
+                    right_node = left_node->next;
+                }else{
+                    left_node = right_node;
+                    right_node = left_node->next;
+                }
+                if((right_node != NULL) && (compare(right_node->value,left_node->value) < 0)){
+                    qtd_fora_ordem++;
+                    aux = left_node->value;
+                    left_node->value = right_node->value;
+                    right_node->value = aux;
+                    aux_ptr_node = right_node->next;
+                    right_node->next = left_node;
+                    left_node->next = aux_ptr_node;
+                }
+                if(qtd_fora_ordem != 0 ){
+                    break;
+                }
+            }
+            if(qtd_fora_ordem == 0){
+                verifica = 0;
+                qtd_fora_ordem = 0;
+            }
+            qtd_fora_ordem = 0;
+        }
+    }
 }
